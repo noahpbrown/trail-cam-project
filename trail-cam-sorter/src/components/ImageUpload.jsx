@@ -1,22 +1,25 @@
-import { useState } from 'react';
 
-export default function ImageUpload() {
-  const [images, setImages] = useState([]);
 
-  const handleUpload = (e) => {
+export default function ImageUpload({ uploadedImages, onUpload }) {
+  const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    const filePreviews = files.map(file => URL.createObjectURL(file));
-    setImages(filePreviews);
+    if (!files.length) return;
+
+    const promises = files.map(file => {
+      const reader = new FileReader();
+      return new Promise(resolve => {
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(promises).then(onUpload);
   };
 
   return (
     <div>
-      <input type="file" multiple accept="image/*" onChange={handleUpload} />
-      <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-        {images.map((src, idx) => (
-          <img key={idx} src={src} alt="preview" width="150" style={{ margin: 5 }} />
-        ))}
-      </div>
+      <input type="file" accept="image/*" multiple onChange={handleImageChange} />
+      {uploadedImages.length > 0 && <p>{uploadedImages.length} image(s) selected</p>}
     </div>
   );
 }
